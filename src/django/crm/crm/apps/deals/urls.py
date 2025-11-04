@@ -7,6 +7,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
 from .viewsets import DealViewSet, DealStageHistoryViewSet
+from .views import DealListCreateView, DealDetailView
 
 # Create router for ViewSets
 router = DefaultRouter()
@@ -28,4 +29,8 @@ urlpatterns = [
     path('deals/<int:pk>/activities/', DealViewSet.as_view({'get': 'activities'}), name='deal-activities'),
     path('deals/closing-soon/', DealViewSet.as_view({'get': 'closing_soon'}), name='deal-closing-soon'),
     path('deals/stalled/', DealViewSet.as_view({'get': 'stalled'}), name='deal-stalled'),
+
+    # Simple TDD API endpoints (KISS principle)
+    path('simple/', DealListCreateView.as_view(), name='deal-list-simple'),
+    path('simple/<int:pk>/', DealDetailView.as_view(), name='deal-detail-simple'),
 ]

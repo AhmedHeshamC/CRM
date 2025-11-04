@@ -7,6 +7,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
 from .viewsets import ActivityViewSet, ActivityCommentViewSet
+from .views import ActivityListCreateView, ActivityDetailView
 
 # Create router for ViewSets
 router = DefaultRouter()
@@ -33,4 +34,8 @@ urlpatterns = [
     path('activities/calendar/', ActivityViewSet.as_view({'get': 'calendar'}), name='activity-calendar'),
     path('activities/by-contact/', ActivityViewSet.as_view({'get': 'by_contact'}), name='activity-by-contact'),
     path('activities/by-deal/', ActivityViewSet.as_view({'get': 'by_deal'}), name='activity-by-deal'),
+
+    # Simple TDD API endpoints (KISS principle)
+    path('simple/', ActivityListCreateView.as_view(), name='activity-list-simple'),
+    path('simple/<int:pk>/', ActivityDetailView.as_view(), name='activity-detail-simple'),
 ]

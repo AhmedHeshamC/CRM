@@ -6,7 +6,7 @@ Following SOLID principles and enterprise best practices
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError as DjangoValidationError
-from django.core.validators import validate_email, URLValidator
+from django.core.validators import validate_email, URLValidator, RegexValidator
 from django.db.models import Sum
 from django.utils.translation import gettext_lazy as _
 
@@ -71,7 +71,7 @@ class BaseContactSerializer(serializers.ModelSerializer):
         allow_null=True,
         help_text="Business phone number (international format: +1-555-123-4567)",
         validators=[
-            serializers.RegexValidator(
+            RegexValidator(
                 regex=r'^\+?1?\-?\s?\(?(\d{3})\)?[\s\-]?(\d{3})[\s\-]?(\d{4})$',
                 message=_('Enter a valid phone number in international format.'),
                 code='invalid_phone'
@@ -243,6 +243,41 @@ class BaseContactSerializer(serializers.ModelSerializer):
         return attrs
 
 
+# Simple TDD Serializers - Following KISS principle
+class SimpleContactSerializer(serializers.ModelSerializer):
+    """
+    Simple Contact Serializer for TDD API development
+    Following KISS principle - minimal functionality
+    """
+    owner = serializers.PrimaryKeyRelatedField(read_only=True)
+    deals_count = serializers.SerializerMethodField()
+    total_deal_value = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Contact
+        fields = [
+            'id', 'first_name', 'last_name', 'email', 'phone', 'company',
+            'is_active', 'owner', 'created_at', 'updated_at',
+            'deals_count', 'total_deal_value'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at', 'owner']
+
+    def get_deals_count(self, obj):
+        """Get number of deals for this contact"""
+        return obj.get_deals_count()
+
+    def get_total_deal_value(self, obj):
+        """Get total deal value for this contact"""
+        return obj.get_total_deal_value()
+
+    def create(self, validated_data):
+        """Set owner from request context"""
+        request = self.context.get('request')
+        if request and request.user:
+            validated_data['owner'] = request.user
+        return super().create(validated_data)
+
+
 class ContactSerializer(BaseContactSerializer):
     """
     Standard Contact Serializer for general use
@@ -287,6 +322,41 @@ class ContactCreateSerializer(BaseContactSerializer):
             })
 
         return attrs
+
+
+# Simple TDD Serializers - Following KISS principle
+class SimpleContactSerializer(serializers.ModelSerializer):
+    """
+    Simple Contact Serializer for TDD API development
+    Following KISS principle - minimal functionality
+    """
+    owner = serializers.PrimaryKeyRelatedField(read_only=True)
+    deals_count = serializers.SerializerMethodField()
+    total_deal_value = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Contact
+        fields = [
+            'id', 'first_name', 'last_name', 'email', 'phone', 'company',
+            'is_active', 'owner', 'created_at', 'updated_at',
+            'deals_count', 'total_deal_value'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at', 'owner']
+
+    def get_deals_count(self, obj):
+        """Get number of deals for this contact"""
+        return obj.get_deals_count()
+
+    def get_total_deal_value(self, obj):
+        """Get total deal value for this contact"""
+        return obj.get_total_deal_value()
+
+    def create(self, validated_data):
+        """Set owner from request context"""
+        request = self.context.get('request')
+        if request and request.user:
+            validated_data['owner'] = request.user
+        return super().create(validated_data)
 
     def create(self, validated_data):
         """
@@ -497,3 +567,38 @@ class ContactBulkOperationSerializer(serializers.Serializer):
                     )
 
         return attrs
+
+
+# Simple TDD Serializers - Following KISS principle
+class SimpleContactSerializer(serializers.ModelSerializer):
+    """
+    Simple Contact Serializer for TDD API development
+    Following KISS principle - minimal functionality
+    """
+    owner = serializers.PrimaryKeyRelatedField(read_only=True)
+    deals_count = serializers.SerializerMethodField()
+    total_deal_value = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Contact
+        fields = [
+            'id', 'first_name', 'last_name', 'email', 'phone', 'company',
+            'is_active', 'owner', 'created_at', 'updated_at',
+            'deals_count', 'total_deal_value'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at', 'owner']
+
+    def get_deals_count(self, obj):
+        """Get number of deals for this contact"""
+        return obj.get_deals_count()
+
+    def get_total_deal_value(self, obj):
+        """Get total deal value for this contact"""
+        return obj.get_total_deal_value()
+
+    def create(self, validated_data):
+        """Set owner from request context"""
+        request = self.context.get('request')
+        if request and request.user:
+            validated_data['owner'] = request.user
+        return super().create(validated_data)

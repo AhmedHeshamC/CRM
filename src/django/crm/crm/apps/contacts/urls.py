@@ -7,6 +7,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
 from .viewsets import ContactViewSet, ContactInteractionViewSet
+from .views import ContactListCreateView, ContactDetailView
 
 # Create router for ViewSets
 router = DefaultRouter()
@@ -28,4 +29,8 @@ urlpatterns = [
     path('contacts/recent/', ContactViewSet.as_view({'get': 'recent'}), name='contact-recent'),
     path('contacts/by-company/', ContactViewSet.as_view({'get': 'by_company'}), name='contact-by-company'),
     path('contacts/search/', ContactViewSet.as_view({'get': 'search'}), name='contact-search'),
+
+    # Simple TDD API endpoints (KISS principle)
+    path('simple/', ContactListCreateView.as_view(), name='contact-list-simple'),
+    path('simple/<int:pk>/', ContactDetailView.as_view(), name='contact-detail-simple'),
 ]

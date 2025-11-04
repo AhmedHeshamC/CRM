@@ -39,7 +39,28 @@ if HAS_SPECTACULAR:
     urlpatterns.insert(2, path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'))
     urlpatterns.insert(3, path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'))
 
-# Try to include app URLs, fall back gracefully if not available
+# API v1 URLs
+try:
+    urlpatterns.append(path('api/v1/auth/', include('crm.apps.users.urls')))
+except ImportError:
+    pass
+
+try:
+    urlpatterns.append(path('api/v1/contacts/', include('crm.apps.contacts.urls')))
+except ImportError:
+    pass
+
+try:
+    urlpatterns.append(path('api/v1/deals/', include('crm.apps.deals.urls')))
+except ImportError:
+    pass
+
+try:
+    urlpatterns.append(path('api/v1/activities/', include('crm.apps.activities.urls')))
+except ImportError:
+    pass
+
+# Try to include authentication URLs, fall back gracefully if not available
 try:
     urlpatterns.append(path('api/v1/auth/', include('crm.apps.authentication.urls')))
 except ImportError:

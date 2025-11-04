@@ -486,4 +486,41 @@ class ActivityReminderSerializer(serializers.Serializer):
                 _('Cannot set reminder time and send now simultaneously.')
             )
 
+
+# Simple TDD Serializers - Following KISS principle
+class SimpleActivitySerializer(serializers.ModelSerializer):
+    """
+    Simple Activity Serializer for TDD API development
+    Following KISS principle - minimal functionality
+    """
+    owner = serializers.PrimaryKeyRelatedField(read_only=True)
+    type_display = serializers.CharField(source='get_type_display', read_only=True)
+    contact_name = serializers.SerializerMethodField()
+    deal_title = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Activity
+        fields = [
+            'id', 'type', 'type_display', 'title', 'description',
+            'contact', 'contact_name', 'deal', 'deal_title',
+            'scheduled_at', 'duration_minutes', 'priority',
+            'owner', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at', 'owner']
+
+    def get_contact_name(self, obj):
+        """Get contact name for display"""
+        return str(obj.contact) if obj.contact else None
+
+    def get_deal_title(self, obj):
+        """Get deal title for display"""
+        return obj.deal.title if obj.deal else None
+
+    def create(self, validated_data):
+        """Set owner from request context"""
+        request = self.context.get('request')
+        if request and request.user:
+            validated_data['owner'] = request.user
+        return super().create(validated_data)
+
         return attrs

@@ -443,7 +443,7 @@ class DealPipelineStatisticsSerializer(serializers.Serializer):
     average_sales_cycle = serializers.IntegerField(read_only=True)
     deals_by_stage = serializers.DictField(read_only=True)
     deals_by_month = serializers.DictField(read_only=True)
-    top performing_stages = serializers.ListField(read_only=True)
+    top_performing_stages = serializers.ListField(read_only=True)
 
 
 class DealForecastSerializer(serializers.Serializer):
@@ -467,4 +467,34 @@ class DealForecastSerializer(serializers.Serializer):
     confidence_level = serializers.DecimalField(max_digits=5, decimal_places=2, read_only=True)
     deals_count = serializers.IntegerField(read_only=True)
     weighted_value = serializers.DecimalField(max_digits=15, decimal_places=2, read_only=True)
+
+
+# Simple TDD Serializers - Following KISS principle
+class SimpleDealSerializer(serializers.ModelSerializer):
+    """
+    Simple Deal Serializer for TDD API development
+    Following KISS principle - minimal functionality
+    """
+    owner = serializers.PrimaryKeyRelatedField(read_only=True)
+    contact_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Deal
+        fields = [
+            'id', 'title', 'description', 'value', 'currency', 'stage',
+            'probability', 'expected_close_date', 'contact', 'contact_name',
+            'owner', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at', 'owner']
+
+    def get_contact_name(self, obj):
+        """Get contact name for display"""
+        return str(obj.contact)
+
+    def create(self, validated_data):
+        """Set owner from request context"""
+        request = self.context.get('request')
+        if request and request.user:
+            validated_data['owner'] = request.user
+        return super().create(validated_data)
     risk_factors = serializers.ListField(read_only=True)
