@@ -7,7 +7,6 @@ Single Responsibility: Each view handles one specific use case
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from django_filters.rest_framework import DjangoFilterBackend
 
 from .models import Deal
 from .serializers import SimpleDealSerializer
@@ -17,14 +16,10 @@ class DealListCreateView(generics.ListCreateAPIView):
     """
     Handle deal listing and creation
     Single Responsibility: Deal list and creation management
+    KISS Principle: Simple, focused implementation
     """
     permission_classes = [IsAuthenticated]
     serializer_class = SimpleDealSerializer
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['stage', 'currency', 'contact']
-    search_fields = ['title', 'description']
-    ordering_fields = ['created_at', 'value', 'expected_close_date']
-    ordering = ['-created_at']
 
     def get_queryset(self):
         """Only return deals for the authenticated user"""

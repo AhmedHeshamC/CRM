@@ -143,7 +143,7 @@ class TestContactAPI(TestCase):
         RED: Test contact creation endpoint
         This should drive the contact creation API implementation
         """
-        url = reverse('contact-list-simple')  # This URL doesn't exist yet
+        url = '/api/v1/contacts/simple/'
 
         response = self.client.post(url, self.contact_data, format='json')
 
@@ -175,7 +175,7 @@ class TestContactAPI(TestCase):
             owner=self.user
         )
 
-        url = reverse('contact-list-simple')  # This URL doesn't exist yet
+        url = '/api/v1/contacts/simple/'
 
         response = self.client.get(url)
 
@@ -198,7 +198,7 @@ class TestContactAPI(TestCase):
             owner=self.user
         )
 
-        url = reverse('contact-detail-simple', kwargs={'pk': contact.pk})  # This URL doesn't exist yet
+        url = f'/api/v1/contacts/simple/{contact.pk}/'
 
         response = self.client.get(url)
 
@@ -221,7 +221,7 @@ class TestContactAPI(TestCase):
             owner=self.user
         )
 
-        url = reverse('contact-detail-simple', kwargs={'pk': contact.pk})  # This URL doesn't exist yet
+        url = f'/api/v1/contacts/simple/{contact.pk}/'
         update_data = {
             'first_name': 'Updated',
             'last_name': 'Name',
@@ -249,7 +249,7 @@ class TestContactAPI(TestCase):
             owner=self.user
         )
 
-        url = reverse('contact-detail-simple', kwargs={'pk': contact.pk})  # This URL doesn't exist yet
+        url = f'/api/v1/contacts/simple/{contact.pk}/'
 
         response = self.client.delete(url)
 
@@ -328,7 +328,7 @@ class TestDealAPI(TestCase):
             title='Deal 1',
             value=25000.00,
             stage='prospect',
-            expected_close_date='2024-12-31',
+            expected_close_date='2025-12-31',
             contact=self.contact,
             owner=self.user
         )
@@ -337,7 +337,7 @@ class TestDealAPI(TestCase):
             title='Deal 2',
             value=75000.00,
             stage='qualified',
-            expected_close_date='2024-11-30',
+            expected_close_date='2025-11-30',
             contact=self.contact,
             owner=self.user
         )
@@ -362,7 +362,7 @@ class TestDealAPI(TestCase):
             title='Stage Test Deal',
             value=50000.00,
             stage='prospect',
-            expected_close_date='2024-12-31',
+            expected_close_date='2025-12-31',
             contact=self.contact,
             owner=self.user
         )
@@ -416,7 +416,7 @@ class TestActivityAPI(TestCase):
             title='Activity Deal',
             value=25000.00,
             stage='qualified',
-            expected_close_date='2024-12-31',
+            expected_close_date='2025-12-31',
             contact=self.contact,
             owner=self.user
         )

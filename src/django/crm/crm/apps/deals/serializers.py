@@ -497,4 +497,3 @@ class SimpleDealSerializer(serializers.ModelSerializer):
         if request and request.user:
             validated_data['owner'] = request.user
         return super().create(validated_data)
-    risk_factors = serializers.ListField(read_only=True)

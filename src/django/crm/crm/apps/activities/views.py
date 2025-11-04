@@ -4,9 +4,9 @@ Following SOLID and KISS principles
 Single Responsibility: Each view handles one specific use case
 """
 
-from rest_framework import generics
+from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
-from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.response import Response
 
 from .models import Activity
 from .serializers import SimpleActivitySerializer
@@ -16,14 +16,10 @@ class ActivityListCreateView(generics.ListCreateAPIView):
     """
     Handle activity listing and creation
     Single Responsibility: Activity list and creation management
+    KISS Principle: Simple, focused implementation
     """
     permission_classes = [IsAuthenticated]
     serializer_class = SimpleActivitySerializer
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['type', 'priority', 'contact', 'deal']
-    search_fields = ['title', 'description']
-    ordering_fields = ['created_at', 'scheduled_at']
-    ordering = ['-scheduled_at']
 
     def get_queryset(self):
         """Only return activities for the authenticated user"""
