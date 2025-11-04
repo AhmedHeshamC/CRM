@@ -21,8 +21,8 @@ from .serializers import (
     DealStageHistorySerializer, DealBulkOperationSerializer,
     DealPipelineStatisticsSerializer, DealForecastSerializer
 )
-from ..shared.repositories.deal_repository import DealRepository
-from ..shared.services.deal_service import DealService
+from ...shared.repositories.deal_repository import DealRepository
+from ...shared.services.deal_service import DealService
 from crm.apps.contacts.models import Contact
 from ...shared.authentication.permissions import DealPermission, IsAdminUser
 

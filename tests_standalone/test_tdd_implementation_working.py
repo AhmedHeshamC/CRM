@@ -1099,6 +1099,7 @@ class TestPerformanceAndScalability(unittest.TestCase):
     def test_memory_usage(self):
         """Test memory usage is reasonable"""
         import sys
+        import gc
 
         # Get initial memory
         initial_objects = len(gc.get_objects())

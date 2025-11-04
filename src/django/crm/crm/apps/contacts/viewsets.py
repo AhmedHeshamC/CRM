@@ -18,8 +18,8 @@ from .serializers import (
     ContactUpdateSerializer, ContactSummarySerializer,
     ContactInteractionSerializer, ContactBulkOperationSerializer
 )
-from ..shared.repositories.contact_repository import ContactRepository
-from ..shared.services.contact_service import ContactService
+from ...shared.repositories.contact_repository import ContactRepository
+from ...shared.services.contact_service import ContactService
 from ...shared.authentication.permissions import ContactPermission, IsAdminUser
 
 User = get_user_model()

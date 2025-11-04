@@ -149,3 +149,27 @@ class DynamicRolePermission(permissions.BasePermission):
 
         # Limited write permissions for managers
         return request.method in ['PATCH']  # Only allow partial updates
+
+
+class ContactPermission(IsOwnerOrReadOnly):
+    """
+    Contact-specific permissions - KISS implementation
+    Inherits from IsOwnerOrReadOnly for reusability
+    """
+    pass
+
+
+class ActivityPermission(IsOwnerOrReadOnly):
+    """
+    Activity-specific permissions - KISS implementation
+    Inherits from IsOwnerOrReadOnly for reusability
+    """
+    pass
+
+
+class DealPermission(IsOwnerOrReadOnly):
+    """
+    Deal-specific permissions - KISS implementation
+    Inherits from IsOwnerOrReadOnly for reusability
+    """
+    pass

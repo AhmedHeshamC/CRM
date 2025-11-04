@@ -20,8 +20,8 @@ from .serializers import (
     ActivityCommentSerializer, ActivityBulkOperationSerializer,
     ActivityStatisticsSerializer
 )
-from ..shared.repositories.activity_repository import ActivityRepository
-from ..shared.services.activity_service import ActivityService
+from ...shared.repositories.activity_repository import ActivityRepository
+from ...shared.services.activity_service import ActivityService
 from crm.apps.contacts.models import Contact
 from crm.apps.deals.models import Deal
 from ...shared.authentication.permissions import ActivityPermission, IsAdminUser
