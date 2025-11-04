@@ -9,7 +9,11 @@ from .views import ContactListCreateView, ContactDetailView
 app_name = 'contacts'
 
 urlpatterns = [
-    # Simple TDD API endpoints (KISS principle)
+    # Standard REST endpoints (following KISS principle)
+    path('', ContactListCreateView.as_view(), name='contact-list'),
+    path('<int:pk>/', ContactDetailView.as_view(), name='contact-detail'),
+
+    # Simple TDD API endpoints (KISS principle) - keep for backward compatibility
     path('simple/', ContactListCreateView.as_view(), name='contact-list-simple'),
     path('simple/<int:pk>/', ContactDetailView.as_view(), name='contact-detail-simple'),
 ]

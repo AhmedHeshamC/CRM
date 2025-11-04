@@ -475,7 +475,10 @@ class SimpleDealSerializer(serializers.ModelSerializer):
     Simple Deal Serializer for TDD API development
     Following KISS principle - minimal functionality
     """
-    owner = serializers.PrimaryKeyRelatedField(read_only=True)
+    owner = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+        default=serializers.CurrentUserDefault()  # KISS: Use current user as default
+    )
     contact_name = serializers.SerializerMethodField()
 
     class Meta:
@@ -485,15 +488,15 @@ class SimpleDealSerializer(serializers.ModelSerializer):
             'probability', 'expected_close_date', 'contact', 'contact_name',
             'owner', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'owner']
+        read_only_fields = ['id', 'created_at', 'updated_at']  # KISS: Allow owner to be set during creation
 
     def get_contact_name(self, obj):
         """Get contact name for display"""
         return str(obj.contact)
 
     def create(self, validated_data):
-        """Set owner from request context"""
+        """KISS principle: Use provided owner or fallback to request user"""
         request = self.context.get('request')
-        if request and request.user:
+        if request and request.user and 'owner' not in validated_data:
             validated_data['owner'] = request.user
         return super().create(validated_data)

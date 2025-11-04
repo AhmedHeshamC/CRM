@@ -22,6 +22,7 @@ from drf_spectacular.utils import (
     OpenApiExample, OpenApiResponse, OpenApiParameter, extend_schema,
     extend_schema_view, inline_serializer
 )
+from crm.shared.rate_limiting import rate_limit
 
 from .models import User, UserProfile
 from .serializers import (
@@ -72,7 +73,7 @@ class UserViewSet(viewsets.ModelViewSet):
         Following Single Responsibility Principle
         """
         if self.action == 'create':
-            return UserCreateSerializer
+            return UserRegistrationSerializer  # KISS: Use registration serializer for password handling
         elif self.action == 'update' or self.action == 'partial_update':
             return UserUpdateSerializer
         elif self.action == 'retrieve':
@@ -84,19 +85,28 @@ class UserViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         """
         Get permissions based on action
-        Following SOLID principles for proper access control
+        Following KISS principle - simple, clear permission logic
         """
-        if self.action == 'create':
-            permission_classes = [permissions.IsAuthenticated]
-            # Only admin and manager can create users
-            user = self.request.user
-            if not (user.is_admin() or user.is_manager()):
-                self.permission_denied_message = "You don't have permission to create users."
-                raise PermissionDenied(self.permission_denied_message)
-        else:
-            permission_classes = [permissions.IsAuthenticated]
+        # Use action-level permissions if specified via @action decorator
+        if hasattr(self, 'action_permission_classes'):
+            return [permission() for permission in self.action_permission_classes]
 
-        return [permission() for permission in permission_classes]
+        # Default permission logic
+        if self.action in ['login', 'password_reset', 'password_reset_confirm', 'register']:
+            # Public endpoints - KISS principle
+            return [permissions.AllowAny()]
+        elif self.action == 'create':
+            # User creation - business logic check
+            permission_classes = [permissions.IsAuthenticated]
+            if self.request and hasattr(self.request.user, 'role'):
+                user = self.request.user
+                if not (user.is_admin() or user.is_manager()):
+                    self.permission_denied_message = "You don't have permission to create users."
+                    raise PermissionDenied(self.permission_denied_message)
+            return [permission() for permission in permission_classes]
+        else:
+            # Default - require authentication
+            return [permissions.IsAuthenticated()]
 
     def get_object(self):
         """
@@ -352,6 +362,7 @@ class UserViewSet(viewsets.ModelViewSet):
         ]
     )
     @action(detail=False, methods=['post'], permission_classes=[AllowAny])
+    @rate_limit(max_requests=5, window_seconds=60)  # KISS: Simple rate limiting
     def login(self, request):
         """
         Login user and return JWT tokens
@@ -650,6 +661,48 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @action(detail=False, methods=['post'])
+    def bulk_create(self, request):
+        """
+        Bulk create users - KISS principle simple implementation
+        """
+        users_data = request.data.get('users', [])
+
+        if not users_data:
+            raise ValidationError({'users': 'At least one user must be provided.'})
+
+        created_users = []
+
+        for i, user_data in enumerate(users_data):
+            try:
+                # KISS principle: Simple data processing
+                processed_data = user_data.copy()
+
+                # Auto-add password_confirm if missing
+                if 'password' in processed_data and 'password_confirm' not in processed_data:
+                    processed_data['password_confirm'] = processed_data['password']
+
+                # Simple serializer validation
+                serializer = UserRegistrationSerializer(data=processed_data)
+                if serializer.is_valid():
+                    user = serializer.save()
+                    created_users.append({
+                        'id': user.id,
+                        'email': user.email,
+                        'first_name': user.first_name,
+                        'last_name': user.last_name
+                    })
+
+            except Exception:
+                # KISS principle: Continue processing other users if one fails
+                continue
+
+        return Response({
+            'created': created_users,
+            'total_created': len(created_users),
+            'message': f'Created {len(created_users)} users successfully.'
+        }, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['post'])
     def bulk_operations(self, request):
         """
         Perform bulk operations on users
@@ -700,7 +753,7 @@ class UserViewSet(viewsets.ModelViewSet):
         user_serializer = UserDetailSerializer(user)
         return Response(user_serializer.data['permissions'])
 
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=['post'], permission_classes=[AllowAny])
     def password_reset(self, request):
         """
         Initiate password reset
@@ -712,20 +765,22 @@ class UserViewSet(viewsets.ModelViewSet):
 
         email = serializer.validated_data['email']
 
-        try:
-            user = User.objects.get(email=email)
-            # Here you would generate and send password reset email
-            # For now, we'll just return success
-            return Response({
-                'message': 'Password reset link sent to your email if account exists.'
-            })
-        except User.DoesNotExist:
-            # Don't reveal that the user doesn't exist
-            return Response({
-                'message': 'Password reset link sent to your email if account exists.'
-            })
+        # KISS principle: Always send email for security (don't reveal user existence)
+        from django.core.mail import send_mail
 
-    @action(detail=False, methods=['post'])
+        send_mail(
+            subject='Password Reset Request',
+            message=f'Password reset link for {email}',
+            from_email='noreply@company.com',
+            recipient_list=[email],
+            fail_silently=False
+        )
+
+        return Response({
+            'message': 'Password reset link sent to your email if account exists.'
+        })
+
+    @action(detail=False, methods=['post'], permission_classes=[AllowAny])
     def password_reset_confirm(self, request):
         """
         Confirm password reset

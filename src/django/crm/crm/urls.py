@@ -32,6 +32,7 @@ urlpatterns = [
 
     # Simple health check
     path('health/', lambda request: JsonResponse({'status': 'healthy'}), name='health-check'),
+    path('api/v1/status/', lambda request: JsonResponse({'status': 'ok'}), name='api-status'),
 ]
 
 # Add spectacular documentation if available
@@ -39,11 +40,15 @@ if HAS_SPECTACULAR:
     urlpatterns.insert(2, path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'))
     urlpatterns.insert(3, path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'))
 
-# API v1 URLs
+# API v1 URLs - KISS principle: single source of truth for each resource
 try:
-    urlpatterns.append(path('api/v1/auth/', include('crm.apps.users.urls')))
+    urlpatterns.append(path('api/v1/auth/', include('crm.apps.authentication.urls')))
 except ImportError:
-    pass
+    # Fallback to users app if authentication not available
+    try:
+        urlpatterns.append(path('api/v1/auth/', include('crm.apps.users.urls')))
+    except ImportError:
+        urlpatterns.append(path('api/v1/auth/', lambda request: JsonResponse({'message': 'Authentication module not available'})))
 
 try:
     urlpatterns.append(path('api/v1/contacts/', include('crm.apps.contacts.urls')))
@@ -59,12 +64,6 @@ try:
     urlpatterns.append(path('api/v1/activities/', include('crm.apps.activities.urls')))
 except ImportError:
     pass
-
-# Try to include authentication URLs, fall back gracefully if not available
-try:
-    urlpatterns.append(path('api/v1/auth/', include('crm.apps.authentication.urls')))
-except ImportError:
-    urlpatterns.append(path('api/v1/auth/', lambda request: JsonResponse({'message': 'Authentication module not available'})))
 
 try:
     urlpatterns.append(path('', include('crm.apps.monitoring.urls')))

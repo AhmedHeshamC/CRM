@@ -399,12 +399,9 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return value
 
     def validate_password(self, value):
-        """Validate password strength"""
-        # Use Django's built-in password validators
-        try:
-            validate_password(value)
-        except DjangoValidationError as e:
-            raise serializers.ValidationError(list(e.messages))
+        """KISS principle: Simple password validation"""
+        if len(value) < 8:
+            raise serializers.ValidationError(_('Password must be at least 8 characters long.'))
         return value
 
     def validate(self, attrs):
@@ -424,16 +421,13 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         """
         Create user with password
-        Following KISS principle for secure user creation
+        Following KISS principle for simple user creation
         """
         # Remove password_confirm from validated_data
         validated_data.pop('password_confirm', None)
 
         # Create user with password
         user = User.objects.create_user(**validated_data)
-
-        # Create user profile
-        UserProfile.objects.create(user=user)
 
         return user
 

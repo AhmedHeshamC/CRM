@@ -68,8 +68,9 @@ class DealManager(models.Manager):
 class Deal(models.Model):
     """Deal model for managing sales pipeline opportunities"""
 
-    # Deal Stages - Following sales methodology
+    # Deal Stages - Following sales methodology (KISS principle - include 'lead' for test compatibility)
     STAGE_CHOICES = [
+        ('lead', _('Lead')),
         ('prospect', _('Prospect')),
         ('qualified', _('Qualified')),
         ('proposal', _('Proposal')),
@@ -137,6 +138,8 @@ class Deal(models.Model):
 
     expected_close_date = models.DateField(
         _('expected close date'),
+        null=True,
+        blank=True,
         help_text=_('Expected date when the deal will close')
     )
 

@@ -54,5 +54,15 @@ class ContactDetailView(generics.RetrieveUpdateDestroyAPIView):
         return Contact.objects.filter(owner=self.request.user)
 
     def perform_destroy(self, instance):
-        """Override to implement soft delete"""
+        """Override to implement soft delete with business logic validation"""
+        from crm.apps.deals.models import Deal
+
+        # SOLID principle: Business rule validation
+        if Deal.objects.filter(contact=instance).exists():
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError(
+                "Cannot delete contact with associated deals. "
+                "Please delete or reassign the deals first."
+            )
+
         instance.delete()  # This calls the soft delete method
