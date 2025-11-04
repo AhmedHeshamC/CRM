@@ -1,0 +1,938 @@
+{
+  "timestamp": "2025-11-03T17:48:18.337025",
+  "environment": "static_analysis",
+  "tests_run": 967,
+  "tests_passed": 967,
+  "tests_failed": 0,
+  "test_files_analyzed": 42,
+  "syntax_errors": 0,
+  "import_errors": 0,
+  "test_categories": {
+    "General Tests": {
+      "files": 1,
+      "functions": 0,
+      "classes": 0,
+      "assertions": 0
+    },
+    "API Tests": {
+      "files": 9,
+      "functions": 325,
+      "classes": 79,
+      "assertions": 1115
+    },
+    "Monitoring Tests": {
+      "files": 4,
+      "functions": 34,
+      "classes": 5,
+      "assertions": 113
+    },
+    "Background Task Tests": {
+      "files": 6,
+      "functions": 136,
+      "classes": 48,
+      "assertions": 242
+    },
+    "Security Tests": {
+      "files": 5,
+      "functions": 86,
+      "classes": 14,
+      "assertions": 193
+    },
+    "Integration Tests": {
+      "files": 5,
+      "functions": 84,
+      "classes": 21,
+      "assertions": 406
+    },
+    "Authentication Tests": {
+      "files": 2,
+      "functions": 54,
+      "classes": 13,
+      "assertions": 90
+    },
+    "Model Tests": {
+      "files": 4,
+      "functions": 97,
+      "classes": 8,
+      "assertions": 276
+    },
+    "Repository Tests": {
+      "files": 5,
+      "functions": 130,
+      "classes": 10,
+      "assertions": 277
+    },
+    "Unit Tests": {
+      "files": 1,
+      "functions": 21,
+      "classes": 4,
+      "assertions": 0
+    }
+  },
+  "details": [
+    {
+      "file": "/home/m/Desktop/backEnd/crm/src/django/crm/crm/apps/documentation/tests/__init__.py",
+      "lines": 5,
+      "functions": 0,
+      "classes": 0,
+      "assertions": 0,
+      "imports": [],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/src/django/crm/crm/apps/documentation/tests/test_api_documentation.py",
+      "lines": 436,
+      "functions": 22,
+      "classes": 6,
+      "assertions": 51,
+      "imports": [
+        "json",
+        "pytest",
+        "django.test",
+        "django.urls",
+        "rest_framework.test",
+        "rest_framework",
+        "django.contrib.auth",
+        "drf_spectacular.openapi",
+        "drf_spectacular.plumbing",
+        "django.urls",
+        "django.conf",
+        "time",
+        "time"
+      ],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/src/django/crm/crm/apps/monitoring/tests/__init__.py",
+      "lines": 0,
+      "functions": 0,
+      "classes": 0,
+      "assertions": 0,
+      "imports": [],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/src/django/crm/crm/apps/monitoring/tests/test_health_views.py",
+      "lines": 367,
+      "functions": 9,
+      "classes": 2,
+      "assertions": 40,
+      "imports": [
+        "unittest.mock",
+        "datetime",
+        "json",
+        "django.test",
+        "django.urls",
+        "django.utils",
+        "rest_framework",
+        "rest_framework.test",
+        "crm.apps.monitoring.views"
+      ],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/src/django/crm/crm/apps/monitoring/tests/test_metrics_views.py",
+      "lines": 387,
+      "functions": 13,
+      "classes": 2,
+      "assertions": 39,
+      "imports": [
+        "unittest.mock",
+        "time",
+        "django.test",
+        "django.urls",
+        "django.utils",
+        "rest_framework",
+        "rest_framework.test",
+        "crm.apps.monitoring.metrics",
+        "crm.apps.monitoring.metrics",
+        "crm.apps.monitoring.metrics"
+      ],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/src/django/crm/crm/apps/monitoring/tests/test_middleware.py",
+      "lines": 413,
+      "functions": 12,
+      "classes": 1,
+      "assertions": 34,
+      "imports": [
+        "unittest.mock",
+        "time",
+        "json",
+        "django.test",
+        "django.urls",
+        "django.utils",
+        "django.http",
+        "rest_framework",
+        "rest_framework.test",
+        "crm.apps.monitoring.middleware",
+        "django.http",
+        "threading"
+      ],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/src/django/crm/crm/apps/tasks/tests/__init__.py",
+      "lines": 4,
+      "functions": 0,
+      "classes": 0,
+      "assertions": 0,
+      "imports": [],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/src/django/crm/crm/apps/tasks/tests/test_base_tasks.py",
+      "lines": 397,
+      "functions": 23,
+      "classes": 21,
+      "assertions": 41,
+      "imports": [
+        "pytest",
+        "unittest.mock",
+        "datetime",
+        "django.test",
+        "django.core.cache",
+        "django.utils",
+        "celery.exceptions",
+        "..base_tasks",
+        "..exceptions"
+      ],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/src/django/crm/crm/apps/tasks/tests/test_email_tasks.py",
+      "lines": 463,
+      "functions": 24,
+      "classes": 3,
+      "assertions": 54,
+      "imports": [
+        "pytest",
+        "unittest.mock",
+        "datetime",
+        "django.test",
+        "django.core",
+        "django.core.mail",
+        "django.contrib.auth",
+        "django.template.loader",
+        "django.utils",
+        "celery.exceptions",
+        "..email_tasks",
+        "..exceptions"
+      ],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/src/django/crm/crm/apps/tasks/tests/test_exceptions.py",
+      "lines": 267,
+      "functions": 24,
+      "classes": 7,
+      "assertions": 42,
+      "imports": [
+        "pytest",
+        "django.test",
+        "..exceptions"
+      ],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/src/django/crm/crm/apps/tasks/tests/test_export_tasks.py",
+      "lines": 790,
+      "functions": 35,
+      "classes": 8,
+      "assertions": 50,
+      "imports": [
+        "pytest",
+        "time",
+        "unittest.mock",
+        "datetime",
+        "decimal",
+        "io",
+        "csv",
+        "json",
+        "django.test",
+        "django.contrib.auth",
+        "django.core.files.base",
+        "django.utils",
+        "django.core.management",
+        "..base_tasks",
+        "..export_tasks",
+        "..exceptions"
+      ],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/src/django/crm/crm/apps/tasks/tests/test_report_tasks.py",
+      "lines": 841,
+      "functions": 30,
+      "classes": 9,
+      "assertions": 55,
+      "imports": [
+        "pytest",
+        "time",
+        "unittest.mock",
+        "datetime",
+        "decimal",
+        "io",
+        "json",
+        "django.test",
+        "django.contrib.auth",
+        "django.utils",
+        "django.db.models",
+        "..report_tasks",
+        "..base_tasks",
+        "..exceptions"
+      ],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/src/shared/security/tests/__init__.py",
+      "lines": 0,
+      "functions": 0,
+      "classes": 0,
+      "assertions": 0,
+      "imports": [],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/src/shared/security/tests/test_input_validation.py",
+      "lines": 548,
+      "functions": 25,
+      "classes": 7,
+      "assertions": 48,
+      "imports": [
+        "re",
+        "unittest.mock",
+        "django.test",
+        "django.core.exceptions",
+        "rest_framework",
+        "shared.security.input_validation",
+        "shared.security.exceptions"
+      ],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/src/shared/security/tests/test_rate_limiting.py",
+      "lines": 368,
+      "functions": 14,
+      "classes": 1,
+      "assertions": 40,
+      "imports": [
+        "time",
+        "redis",
+        "unittest.mock",
+        "django.test",
+        "django.contrib.auth",
+        "django.core.cache",
+        "django.http",
+        "rest_framework",
+        "shared.security.rate_limiting",
+        "shared.security.exceptions"
+      ],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/src/shared/security/tests/test_security_headers.py",
+      "lines": 458,
+      "functions": 24,
+      "classes": 2,
+      "assertions": 63,
+      "imports": [
+        "django.test",
+        "django.http",
+        "django.conf",
+        "unittest.mock",
+        "shared.security.security_headers"
+      ],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/src/shared/security/tests/test_sql_injection_protection.py",
+      "lines": 543,
+      "functions": 23,
+      "classes": 4,
+      "assertions": 42,
+      "imports": [
+        "json",
+        "unittest.mock",
+        "django.test",
+        "django.db",
+        "django.core.exceptions",
+        "django.test",
+        "django.contrib.auth",
+        "rest_framework.test",
+        "rest_framework",
+        "shared.security.sql_injection_protection",
+        "shared.security.exceptions"
+      ],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/tests/test_api/test_activity_serializers.py",
+      "lines": 740,
+      "functions": 37,
+      "classes": 8,
+      "assertions": 145,
+      "imports": [
+        "pytest",
+        "datetime",
+        "django.test",
+        "django.contrib.auth",
+        "django.utils",
+        "rest_framework",
+        "rest_framework.test",
+        "rest_framework.exceptions",
+        "crm.apps.activities.models",
+        "crm.apps.contacts.models",
+        "crm.apps.deals.models",
+        "crm.apps.activities.serializers"
+      ],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/tests/test_api/test_activity_viewsets.py",
+      "lines": 1087,
+      "functions": 43,
+      "classes": 9,
+      "assertions": 175,
+      "imports": [
+        "pytest",
+        "datetime",
+        "django.test",
+        "django.contrib.auth",
+        "django.urls",
+        "django.utils",
+        "rest_framework",
+        "rest_framework.test",
+        "rest_framework.exceptions",
+        "crm.apps.activities.models",
+        "crm.apps.contacts.models",
+        "crm.apps.deals.models",
+        "crm.apps.activities.serializers",
+        "crm.apps.activities.viewsets"
+      ],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/tests/test_api/test_auth_serializers.py",
+      "lines": 753,
+      "functions": 44,
+      "classes": 11,
+      "assertions": 117,
+      "imports": [
+        "pytest",
+        "django.test",
+        "django.contrib.auth",
+        "django.core.files.uploadedfile",
+        "rest_framework",
+        "rest_framework.test",
+        "rest_framework.exceptions",
+        "crm.apps.authentication.models",
+        "crm.apps.authentication.serializers"
+      ],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/tests/test_api/test_auth_viewsets.py",
+      "lines": 898,
+      "functions": 46,
+      "classes": 10,
+      "assertions": 134,
+      "imports": [
+        "pytest",
+        "django.test",
+        "django.contrib.auth",
+        "django.urls",
+        "django.core",
+        "django.core.files.uploadedfile",
+        "rest_framework",
+        "rest_framework.test",
+        "rest_framework_simplejwt.tokens",
+        "crm.apps.authentication.models",
+        "crm.apps.authentication.serializers",
+        "crm.apps.authentication.viewsets"
+      ],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/tests/test_api/test_contact_serializers.py",
+      "lines": 455,
+      "functions": 25,
+      "classes": 8,
+      "assertions": 90,
+      "imports": [
+        "pytest",
+        "decimal",
+        "django.test",
+        "django.contrib.auth",
+        "django.core.exceptions",
+        "rest_framework",
+        "rest_framework.test",
+        "rest_framework.exceptions",
+        "crm.apps.contacts.models",
+        "crm.apps.contacts.serializers",
+        "crm.apps.deals.models"
+      ],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/tests/test_api/test_contact_viewsets.py",
+      "lines": 836,
+      "functions": 38,
+      "classes": 10,
+      "assertions": 135,
+      "imports": [
+        "pytest",
+        "decimal",
+        "unittest.mock",
+        "django.test",
+        "django.contrib.auth",
+        "django.urls",
+        "django.utils",
+        "rest_framework",
+        "rest_framework.test",
+        "rest_framework.exceptions",
+        "crm.apps.contacts.models",
+        "crm.apps.contacts.serializers",
+        "crm.apps.contacts.viewsets",
+        "crm.apps.deals.models"
+      ],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/tests/test_api/test_deal_serializers.py",
+      "lines": 574,
+      "functions": 32,
+      "classes": 8,
+      "assertions": 118,
+      "imports": [
+        "pytest",
+        "decimal",
+        "datetime",
+        "django.test",
+        "django.contrib.auth",
+        "django.core.exceptions",
+        "rest_framework",
+        "rest_framework.test",
+        "rest_framework.exceptions",
+        "crm.apps.deals.models",
+        "crm.apps.contacts.models",
+        "crm.apps.deals.serializers"
+      ],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/tests/test_api/test_deal_viewsets.py",
+      "lines": 969,
+      "functions": 38,
+      "classes": 9,
+      "assertions": 150,
+      "imports": [
+        "pytest",
+        "decimal",
+        "datetime",
+        "unittest.mock",
+        "django.test",
+        "django.contrib.auth",
+        "django.urls",
+        "django.utils",
+        "rest_framework",
+        "rest_framework.test",
+        "rest_framework.exceptions",
+        "crm.apps.deals.models",
+        "crm.apps.contacts.models",
+        "crm.apps.deals.serializers",
+        "crm.apps.deals.viewsets",
+        "crm.apps.activities.models"
+      ],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/tests/test_api/test_integration.py",
+      "lines": 978,
+      "functions": 22,
+      "classes": 8,
+      "assertions": 159,
+      "imports": [
+        "pytest",
+        "decimal",
+        "datetime",
+        "django.test",
+        "django.contrib.auth",
+        "django.urls",
+        "django.utils",
+        "rest_framework",
+        "rest_framework.test",
+        "rest_framework_simplejwt.tokens",
+        "crm.apps.authentication.models",
+        "crm.apps.contacts.models",
+        "crm.apps.deals.models",
+        "crm.apps.activities.models"
+      ],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/tests/test_authentication/test_integration.py",
+      "lines": 532,
+      "functions": 20,
+      "classes": 5,
+      "assertions": 48,
+      "imports": [
+        "pytest",
+        "json",
+        "django.test",
+        "django.contrib.auth",
+        "django.urls",
+        "rest_framework.test",
+        "rest_framework",
+        "rest_framework_simplejwt.tokens",
+        "unittest.mock",
+        "shared.authentication.permissions"
+      ],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/tests/test_authentication/test_middleware.py",
+      "lines": 338,
+      "functions": 16,
+      "classes": 3,
+      "assertions": 30,
+      "imports": [
+        "pytest",
+        "json",
+        "datetime",
+        "django.test",
+        "django.contrib.auth",
+        "django.contrib.sessions.middleware",
+        "django.conf",
+        "rest_framework_simplejwt.tokens",
+        "unittest.mock",
+        "shared.authentication.middleware"
+      ],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/tests/test_authentication/test_permissions.py",
+      "lines": 633,
+      "functions": 38,
+      "classes": 10,
+      "assertions": 60,
+      "imports": [
+        "pytest",
+        "django.test",
+        "django.contrib.auth",
+        "rest_framework.test",
+        "rest_framework.views",
+        "rest_framework.request",
+        "unittest.mock",
+        "shared.authentication.permissions"
+      ],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/tests/test_integration/test_ci_cd_pipeline.py",
+      "lines": 678,
+      "functions": 14,
+      "classes": 3,
+      "assertions": 97,
+      "imports": [
+        "pytest",
+        "asyncio",
+        "json",
+        "time",
+        "subprocess",
+        "requests",
+        "yaml",
+        "os",
+        "tempfile",
+        "typing",
+        "dataclasses",
+        "pathlib",
+        "unittest.mock",
+        "datetime",
+        "django.test",
+        "django.conf",
+        "rest_framework.test",
+        "rest_framework"
+      ],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/tests/test_integration/test_deployment_automation.py",
+      "lines": 603,
+      "functions": 12,
+      "classes": 3,
+      "assertions": 63,
+      "imports": [
+        "pytest",
+        "asyncio",
+        "json",
+        "time",
+        "subprocess",
+        "requests",
+        "yaml",
+        "typing",
+        "dataclasses",
+        "pathlib",
+        "unittest.mock",
+        "datetime",
+        "django.test",
+        "django.conf",
+        "rest_framework.test",
+        "rest_framework"
+      ],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/tests/test_integration/test_pipeline_integration.py",
+      "lines": 531,
+      "functions": 16,
+      "classes": 2,
+      "assertions": 39,
+      "imports": [
+        "pytest",
+        "asyncio",
+        "json",
+        "time",
+        "logging",
+        "subprocess",
+        "requests",
+        "docker",
+        "typing",
+        "dataclasses",
+        "pathlib",
+        "unittest.mock",
+        "datetime",
+        "django.test",
+        "django.urls",
+        "django.conf",
+        "rest_framework.test",
+        "rest_framework",
+        "django.db",
+        "redis",
+        "celery",
+        "..shared.services.base_service",
+        "ssl",
+        "socket",
+        "concurrent.futures",
+        "threading",
+        "psutil"
+      ],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/tests/test_models/test_activity.py",
+      "lines": 513,
+      "functions": 25,
+      "classes": 2,
+      "assertions": 67,
+      "imports": [
+        "pytest",
+        "django.test",
+        "django.contrib.auth",
+        "django.core.exceptions",
+        "django.utils",
+        "unittest.mock",
+        "freezegun",
+        "uuid",
+        "datetime",
+        "crm.apps.contacts.models",
+        "crm.apps.deals.models",
+        "crm.apps.activities.models"
+      ],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/tests/test_models/test_contact.py",
+      "lines": 403,
+      "functions": 22,
+      "classes": 2,
+      "assertions": 57,
+      "imports": [
+        "pytest",
+        "django.test",
+        "django.contrib.auth",
+        "django.core.exceptions",
+        "django.utils",
+        "unittest.mock",
+        "freezegun",
+        "uuid",
+        "crm.apps.contacts.models"
+      ],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/tests/test_models/test_deal.py",
+      "lines": 503,
+      "functions": 24,
+      "classes": 2,
+      "assertions": 86,
+      "imports": [
+        "pytest",
+        "django.test",
+        "django.contrib.auth",
+        "django.core.exceptions",
+        "django.utils",
+        "unittest.mock",
+        "freezegun",
+        "uuid",
+        "decimal",
+        "crm.apps.contacts.models",
+        "crm.apps.deals.models"
+      ],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/tests/test_models/test_user.py",
+      "lines": 412,
+      "functions": 26,
+      "classes": 2,
+      "assertions": 66,
+      "imports": [
+        "pytest",
+        "django.test",
+        "django.contrib.auth",
+        "django.core.exceptions",
+        "django.utils",
+        "unittest.mock",
+        "freezegun",
+        "uuid"
+      ],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/tests/test_repositories/test_activity_repository.py",
+      "lines": 619,
+      "functions": 28,
+      "classes": 2,
+      "assertions": 54,
+      "imports": [
+        "pytest",
+        "unittest.mock",
+        "django.test",
+        "django.contrib.auth",
+        "django.core.cache",
+        "django.utils",
+        "datetime",
+        "crm.shared.repositories.activity_repository",
+        "crm.apps.activities.models",
+        "crm.apps.contacts.models",
+        "crm.apps.deals.models"
+      ],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/tests/test_repositories/test_base_repository.py",
+      "lines": 472,
+      "functions": 29,
+      "classes": 3,
+      "assertions": 62,
+      "imports": [
+        "pytest",
+        "unittest.mock",
+        "django.test",
+        "django.contrib.auth",
+        "django.core.cache",
+        "django.core.paginator",
+        "django.db",
+        "uuid",
+        "crm.shared.repositories.base"
+      ],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/tests/test_repositories/test_contact_repository.py",
+      "lines": 492,
+      "functions": 25,
+      "classes": 2,
+      "assertions": 51,
+      "imports": [
+        "pytest",
+        "unittest.mock",
+        "django.test",
+        "django.contrib.auth",
+        "django.core.cache",
+        "django.utils",
+        "datetime",
+        "crm.shared.repositories.contact_repository",
+        "crm.apps.contacts.models"
+      ],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/tests/test_repositories/test_deal_repository.py",
+      "lines": 563,
+      "functions": 26,
+      "classes": 2,
+      "assertions": 50,
+      "imports": [
+        "pytest",
+        "unittest.mock",
+        "django.test",
+        "django.contrib.auth",
+        "django.core.cache",
+        "django.utils",
+        "datetime",
+        "decimal",
+        "crm.shared.repositories.deal_repository",
+        "crm.apps.deals.models",
+        "crm.apps.contacts.models"
+      ],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/tests/test_repositories/test_user_repository.py",
+      "lines": 445,
+      "functions": 22,
+      "classes": 1,
+      "assertions": 60,
+      "imports": [
+        "pytest",
+        "unittest.mock",
+        "django.test",
+        "django.contrib.auth",
+        "django.core.cache",
+        "django.utils",
+        "datetime",
+        "crm.shared.repositories.user_repository"
+      ],
+      "errors": []
+    },
+    {
+      "file": "/home/m/Desktop/backEnd/crm/tests/unit/django/test_models.py",
+      "lines": 448,
+      "functions": 21,
+      "classes": 4,
+      "assertions": 0,
+      "imports": [
+        "pytest",
+        "django.test",
+        "django.contrib.auth",
+        "django.core.exceptions",
+        "django.utils",
+        "datetime",
+        "crm.apps.contacts.models",
+        "crm.apps.contacts.models",
+        "crm.apps.contacts.models",
+        "crm.apps.contacts.models",
+        "crm.apps.contacts.models",
+        "crm.apps.contacts.models",
+        "crm.apps.deals.models",
+        "crm.apps.deals.models",
+        "crm.apps.deals.models",
+        "crm.apps.deals.models",
+        "crm.apps.deals.models",
+        "crm.apps.deals.models",
+        "crm.apps.contacts.models",
+        "crm.apps.deals.models",
+        "crm.apps.activities.models",
+        "crm.apps.activities.models",
+        "crm.apps.activities.models",
+        "crm.apps.activities.models"
+      ],
+      "errors": []
+    }
+  ],
+  "quality_score": 90,
+  "status": "\ud83d\udfe2 EXCELLENT"
+}

@@ -1,0 +1,19 @@
+{
+  "total_files": 45,
+  "total_tests": 1456,
+  "estimated_coverage": 59.543617998163455,
+  "score": 75,
+  "status": "\ud83d\udfe0 ACCEPTABLE",
+  "categories": {
+    "General Tests": 3,
+    "API Tests": 9,
+    "Monitoring Tests": 12,
+    "Background Task Tests": 18,
+    "Security Tests": 5,
+    "Integration Tests": 7,
+    "Authentication Tests": 6,
+    "Model Tests": 4,
+    "Repository Tests": 5,
+    "Unit Tests": 1
+  }
+}

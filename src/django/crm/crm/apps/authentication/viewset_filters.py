@@ -45,8 +45,8 @@ class UserFilterMixin:
 
 class UserQuerysetBuilder(UserFilterMixin):
     """
-    Builder pattern for complex user queries
-    Following SOLID principles
+    Simple queryset builder for user queries - KISS principle
+    Essential filtering methods with minimal complexity
     """
 
     def __init__(self, base_queryset):
@@ -62,14 +62,16 @@ class UserQuerysetBuilder(UserFilterMixin):
         self.queryset = self.apply_status_filter(self.queryset, is_active)
         return self
 
-    def filter_by_department(self, department):
-        """Chain department filtering"""
-        self.queryset = self.apply_department_filter(self.queryset, department)
+    def search(self, query):
+        """Simple search filtering - KISS implementation"""
+        if query:
+            self.queryset = self.apply_search_filter(self.queryset, query)
         return self
 
-    def search(self, query):
-        """Chain search filtering"""
-        self.queryset = self.apply_search_filter(self.queryset, query)
+    def filter_by_department(self, department):
+        """Chain department filtering - KISS implementation"""
+        if department:
+            self.queryset = self.apply_department_filter(self.queryset, department)
         return self
 
     def build(self):

@@ -196,19 +196,19 @@ class UserAuthenticationService:
         return request.META.get('REMOTE_ADDR')
 
 
-class UserManagementService(CachedRepositoryMixin):
+class UserManagementService:
     """
-    Service for user management operations following Single Responsibility Principle
-    Handles user CRUD operations with proper authorization and KISS caching
+    Simple user management service following KISS and SOLID principles
+    Handles user CRUD operations without complex caching dependencies
     """
 
     def __init__(self):
         self.audit_logger = audit_logger
-        super().__init__()  # Initialize caching from CachedRepositoryMixin
+        self.cache = SimpleCache(prefix="user_", timeout=300)
 
     def get_user_queryset(self, requesting_user):
         """
-        Get user queryset based on requesting user permissions with KISS caching
+        Simple user queryset based on permissions - KISS principle
 
         Args:
             requesting_user: User making the request
@@ -216,15 +216,11 @@ class UserManagementService(CachedRepositoryMixin):
         Returns:
             Filtered queryset
         """
-        # Generate cache key based on user permissions
-        cache_key = f'user_queryset_{requesting_user.id}_{requesting_user.role}'
+        # Simple permission check without complex caching
+        if hasattr(requesting_user, 'is_admin') and requesting_user.is_admin():
+            return User.objects.all()
 
-        # Use simple caching pattern (KISS principle)
-        return self._get_cached_or_fetch(
-            cache_key,
-            self._build_user_queryset,
-            requesting_user
-        )
+        return User.objects.filter(id=requesting_user.id)
 
     def _build_user_queryset(self, requesting_user):
         """

@@ -92,3 +92,57 @@ class ContactValidator:
             validated['tags'] = self.list_validator.validate_list(data['tags'])
 
         return validated
+
+
+class SecurityValidator:
+    """Simple security validation following KISS principles"""
+
+    @staticmethod
+    def validate_password_strength(password: str) -> str:
+        """Validate password meets basic security requirements"""
+        if len(password) < 8:
+            raise ValidationError("Password must be at least 8 characters long")
+
+        has_upper = any(c.isupper() for c in password)
+        has_lower = any(c.islower() for c in password)
+        has_digit = any(c.isdigit() for c in password)
+
+        if not (has_upper and has_lower and has_digit):
+            raise ValidationError("Password must contain uppercase, lowercase, and digit")
+
+        return password
+
+    @staticmethod
+    def validate_input_safety(input_text: str) -> str:
+        """Basic input sanitization - prevent obvious attacks"""
+        if not input_text:
+            return input_text
+
+        # Remove potential script tags
+        if '<script' in input_text.lower():
+            raise ValidationError("Invalid input content")
+
+        # Limit length to prevent DoS
+        if len(input_text) > 10000:
+            raise ValidationError("Input too long")
+
+        return input_text.strip()
+
+    @staticmethod
+    def is_safe_input(input_text: str) -> bool:
+        """Simple safety check - KISS implementation"""
+        if not input_text:
+            return True
+
+        # Basic safety checks
+        if len(input_text) > 10000:
+            return False
+
+        # Check for obvious malicious content
+        if '<script' in input_text.lower():
+            return False
+
+        if 'javascript:' in input_text.lower():
+            return False
+
+        return True

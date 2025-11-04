@@ -124,6 +124,39 @@ class PerformanceMonitoringMiddleware(MiddlewareMixin):
 
         return response
 
+
+class SecurityMiddleware(MiddlewareMixin):
+    """
+    Simple security middleware following KISS principles.
+
+    Provides basic security features without over-engineering.
+    Focuses on essential security headers only.
+    """
+
+    def __init__(self, get_response):
+        """Initialize security middleware."""
+        self.get_response = get_response
+        super().__init__(get_response)
+
+    def process_response(self, request, response):
+        """
+        Add security headers to response.
+
+        Args:
+            request: Django request object
+            response: Django response object
+
+        Returns:
+            HttpResponse: Response with security headers
+        """
+        # Add security headers
+        response['X-Content-Type-Options'] = 'nosniff'
+        response['X-Frame-Options'] = 'DENY'
+        response['X-XSS-Protection'] = '1; mode=block'
+        response['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+
+        return response
+
     def process_exception(self, request, exception):
         """
         Process unhandled exceptions and log as errors.
@@ -411,6 +444,39 @@ class DatabaseQueryLoggingMiddleware(MiddlewareMixin):
         if not self.log_queries:
             return response
 
+
+class SecurityMiddleware(MiddlewareMixin):
+    """
+    Simple security middleware following KISS principles.
+
+    Provides basic security features without over-engineering.
+    Focuses on essential security headers only.
+    """
+
+    def __init__(self, get_response):
+        """Initialize security middleware."""
+        self.get_response = get_response
+        super().__init__(get_response)
+
+    def process_response(self, request, response):
+        """
+        Add security headers to response.
+
+        Args:
+            request: Django request object
+            response: Django response object
+
+        Returns:
+            HttpResponse: Response with security headers
+        """
+        # Add security headers
+        response['X-Content-Type-Options'] = 'nosniff'
+        response['X-Frame-Options'] = 'DENY'
+        response['X-XSS-Protection'] = '1; mode=block'
+        response['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+
+        return response
+
         try:
             from django.db import connection
 
@@ -459,5 +525,38 @@ class DatabaseQueryLoggingMiddleware(MiddlewareMixin):
                 error=str(e),
                 path=getattr(request, 'path', 'unknown')
             )
+
+        return response
+
+
+class SecurityMiddleware(MiddlewareMixin):
+    """
+    Simple security middleware following KISS principles.
+
+    Provides basic security features without over-engineering.
+    Focuses on essential security headers only.
+    """
+
+    def __init__(self, get_response):
+        """Initialize security middleware."""
+        self.get_response = get_response
+        super().__init__(get_response)
+
+    def process_response(self, request, response):
+        """
+        Add security headers to response.
+
+        Args:
+            request: Django request object
+            response: Django response object
+
+        Returns:
+            HttpResponse: Response with security headers
+        """
+        # Add security headers
+        response['X-Content-Type-Options'] = 'nosniff'
+        response['X-Frame-Options'] = 'DENY'
+        response['X-XSS-Protection'] = '1; mode=block'
+        response['Referrer-Policy'] = 'strict-origin-when-cross-origin'
 
         return response

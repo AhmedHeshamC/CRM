@@ -36,6 +36,7 @@ class SimpleCache:
         """Set value in cache"""
         cache_key = self._make_key(key)
         cache.set(cache_key, value, self.timeout)
+        return value  # Return value for KISS simplicity
 
     def delete(self, key: str) -> None:
         """Delete value from cache"""
