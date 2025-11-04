@@ -1,0 +1,158 @@
+# Docker Compose for CI/CD Pipeline
+# Following TDD, SOLID, and KISS principles
+version: '3.8'
+
+services:
+  # Test Database Service
+  postgres-test:
+    image: postgres:15-alpine
+    container_name: crm-postgres-test
+    environment:
+      POSTGRES_DB: crm_test
+      POSTGRES_USER: crm_test
+      POSTGRES_PASSWORD: crm_test_password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+      - ./scripts/init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U crm_test -d crm_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - crm-ci-network
+
+  # Redis for Caching and Sessions
+  redis-test:
+    image: redis:7-alpine
+    container_name: crm-redis-test
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_test_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - crm-ci-network
+
+  # Django Application Test Service
+  django-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.django
+      target: development
+    container_name: crm-django-test
+    environment:
+      # Database Configuration
+      DATABASE_URL: postgres://crm_test:crm_test_password@postgres-test:5432/crm_test
+      POSTGRES_HOST: postgres-test
+      POSTGRES_PORT: 5432
+      POSTGRES_NAME: crm_test
+      POSTGRES_USER: crm_test
+      POSTGRES_PASSWORD: crm_test_password
+
+      # Redis Configuration
+      REDIS_URL: redis://redis-test:6379/0
+      CACHE_URL: redis://redis-test:6379/1
+
+      # Django Settings
+      PYTHONPATH: /app/src
+      DJANGO_SETTINGS_MODULE: crm.settings_test
+      SECRET_KEY: test-secret-key-for-ci-cd-only
+
+      # Testing Configuration
+      TESTING: true
+      CI: true
+      PYTEST_CURRENT_TEST: true
+
+    volumes:
+      - .:/app
+      - test_media:/app/media
+      - test_static:/app/static
+    ports:
+      - "8001:8000"
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - crm-ci-network
+    command: >
+      bash -c "
+        echo '🔴 RED Phase: Running TDD Test Suite...' &&
+        python src/django/crm/manage.py check &&
+        python src/django/crm/manage.py migrate --noinput &&
+        python src/django/crm/manage.py collectstatic --noinput &&
+        echo '🧪 Running Unit Tests (21/21 expected)...' &&
+        PYTHONPATH=/app/src DJANGO_SETTINGS_MODULE=crm.settings_test pytest /app/tests/unit/django/ -v --tb=short &&
+        echo '🔗 Running Integration Tests (7/7 expected)...' &&
+        PYTHONPATH=/app/src DJANGO_SETTINGS_MODULE=crm.settings_test pytest /app/tests/integration/ -v --tb=short &&
+        echo '🌐 Running API Tests (13/13 expected)...' &&
+        PYTHONPATH=/app/src DJANGO_SETTINGS_MODULE=crm.settings_test pytest /app/tests/api/ -v --tb=short &&
+        echo '🎉 All Tests Complete - Ready for GREEN phase!'
+      "
+
+  # Code Quality Service
+  code-quality:
+    build:
+      context: .
+      dockerfile: Dockerfile.django
+      target: development
+    container_name: crm-code-quality
+    environment:
+      PYTHONPATH: /app/src
+      DJANGO_SETTINGS_MODULE: crm.settings_test
+    volumes:
+      - .:/app
+      - ./reports:/app/reports
+    networks:
+      - crm-ci-network
+    command: >
+      bash -c "
+        echo '🔍 GREEN Phase: Code Quality Checks...' &&
+        echo '✨ Code Formatting Check (Black)...' &&
+        black --check /app/src --report-file reports/black-report.txt || true &&
+        echo '📚 Import Sorting Check (isort)...' &&
+        isort --check-only /app/src --diff > reports/isort-report.txt || true &&
+        echo '🔍 Linting (flake8)...' &&
+        flake8 /app/src --output-file reports/flake8-report.txt || true &&
+        echo '🧬 Type Checking (mypy)...' &&
+        mypy /app/src --ignore-missing-imports > reports/mypy-report.txt || true &&
+        echo '🔒 Security Scan (bandit)...' &&
+        bandit -r /app/src -f json -o reports/security-report.json || true &&
+        echo '📊 Coverage Report...' &&
+        PYTHONPATH=/app/src DJANGO_SETTINGS_MODULE=crm.settings_test pytest /app/tests/ --cov=/app/src --cov-report=html --cov-report=xml --cov-report=term-missing --junitxml=reports/pytest-report.xml &&
+        echo '✅ Code Quality Checks Complete!'
+      "
+
+volumes:
+  postgres_test_data:
+    driver: local
+  redis_test_data:
+    driver: local
+  test_media:
+    driver: local
+  test_static:
+    driver: local
+
+networks:
+  crm-ci-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
