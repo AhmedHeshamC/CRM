@@ -289,8 +289,7 @@ class Activity(models.Model):
         if (self.scheduled_at and
             self.scheduled_at < timezone.now() - timedelta(minutes=5) and
             self.type != 'note' and
-            not self.is_completed and
-            not self._state.adding):
+            not self.is_completed):
             raise ValidationError(_('Scheduled time cannot be in the past for new activities.'))
 
         # Validate at least one of contact or deal is specified

@@ -15,16 +15,17 @@ import re
 User = get_user_model()
 
 
+class AllContactManager(models.Manager):
+    """Manager for all contacts including soft-deleted ones"""
+    pass
+
+
 class ContactManager(models.Manager):
     """Custom Contact Manager implementing Repository Pattern"""
 
     def get_queryset(self):
         """Default queryset excluding soft-deleted contacts"""
         return super().get_queryset().filter(is_deleted=False)
-
-    def all_objects(self):
-        """Include soft-deleted contacts"""
-        return super().get_queryset()
 
     def active(self):
         """Get only active contacts"""
@@ -88,7 +89,7 @@ class Contact(models.Model):
         null=True,
         validators=[
             RegexValidator(
-                regex=r'^\+?1?\-?\s?\(?(\d{3})\)?[\s\-]?(\d{3})[\s\-]?(\d{4})$',
+                regex=r'^\+?1?\-?\s?\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{4}$',
                 message=_('Enter a valid phone number.'),
             )
         ],
@@ -230,6 +231,7 @@ class Contact(models.Model):
     )
 
     objects = ContactManager()
+    all_objects = AllContactManager()
 
     class Meta:
         db_table = 'contacts'
@@ -270,7 +272,7 @@ class Contact(models.Model):
         # Validate phone format if provided
         if self.phone:
             phone_validator = RegexValidator(
-                regex=r'^\+?1?\-?\s?\(?(\d{3})\)?[\s\-]?(\d{3})[\s\-]?(\d{4})$',
+                regex=r'^\+?1?\-?\s?\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{4}$',
                 message=_('Enter a valid phone number.'),
             )
             phone_validator(self.phone)

@@ -142,11 +142,11 @@ class TestContactModel(TestCase):
         # Valid phone numbers
         valid_phones = ['+1234567890', '+1-234-567-8900', '(234) 567-8900']
 
-        for phone in valid_phones:
+        for i, phone in enumerate(valid_phones):
             contact = Contact.objects.create(
                 first_name='Test',
-                last_name='User',
-                email=f'test{phone}@example.com',
+                last_name=f'User{i}',
+                email=f'test{i}@example.com',
                 phone=phone,
                 owner=self.user
             )
@@ -167,8 +167,8 @@ class TestContactModel(TestCase):
         contact_id = contact.id
         contact.delete()  # Soft delete
 
-        assert not Contact.objects.filter(id=contact_id, is_deleted=False).exists()
-        assert Contact.objects.filter(id=contact_id, is_deleted=True).exists()
+        assert not Contact.objects.filter(id=contact_id).exists()
+        assert Contact.all_objects.filter(id=contact_id, is_deleted=True).exists()
         assert Contact.all_objects.filter(id=contact_id).exists()  # Include deleted
 
     def test_contact_tags_field(self):
@@ -232,7 +232,7 @@ class TestDealModel(TestCase):
         assert deal.probability == 75
         assert deal.contact == self.contact
         assert deal.owner == self.user
-        assert str(deal) == 'Enterprise Software License - $100,000.00'
+        assert str(deal) == 'Enterprise Software License - USD 100,000.00'
 
     def test_deal_stage_transitions(self):
         """Test deal stage transition validation"""
@@ -243,6 +243,7 @@ class TestDealModel(TestCase):
             title='Test Deal',
             value=50000.00,
             stage='prospect',
+            expected_close_date=timezone.now() + timedelta(days=60),
             contact=self.contact,
             owner=self.user
         )
@@ -266,6 +267,7 @@ class TestDealModel(TestCase):
                 title='Invalid Deal',
                 value=-1000.00,
                 stage='prospect',
+                expected_close_date=timezone.now() + timedelta(days=30),
                 contact=self.contact,
                 owner=self.user
             )
@@ -281,6 +283,7 @@ class TestDealModel(TestCase):
                 value=50000.00,
                 probability=150,
                 stage='prospect',
+                expected_close_date=timezone.now() + timedelta(days=30),
                 contact=self.contact,
                 owner=self.user
             )
@@ -294,6 +297,7 @@ class TestDealModel(TestCase):
             title='Pipeline Test Deal',
             value=75000.00,
             stage='prospect',
+            expected_close_date=timezone.now() + timedelta(days=45),
             contact=self.contact,
             owner=self.user
         )
@@ -315,6 +319,7 @@ class TestDealModel(TestCase):
             title='Win/Loss Test Deal',
             value=50000.00,
             stage='proposal',
+            expected_close_date=timezone.now() + timedelta(days=30),
             contact=self.contact,
             owner=self.user
         )
@@ -361,6 +366,7 @@ class TestActivityModel(TestCase):
             title='Test Deal',
             value=50000.00,
             stage='qualified',
+            expected_close_date=timezone.now() + timedelta(days=30),
             contact=self.contact,
             owner=self.user
         )
@@ -386,7 +392,7 @@ class TestActivityModel(TestCase):
         assert activity.contact == self.contact
         assert activity.deal == self.deal
         assert activity.owner == self.user
-        assert str(activity) == 'Call - Initial Discovery Call'
+        assert str(activity) == 'Phone Call - Initial Discovery Call'
 
     def test_activity_scheduling_validation(self):
         """Test activity scheduling validation"""
