@@ -1,0 +1,273 @@
+---
+# Blue-Green Deployment Strategy
+# Zero-downtime deployments with instant rollback capability
+
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: crm-production-bluegreen
+  namespace: production
+  labels:
+    app: crm
+    environment: production
+    strategy: blue-green
+spec:
+  replicas: 4
+  strategy:
+    blueGreen:
+      activeService: crm-production-active
+      previewService: crm-production-preview
+      autoPromotionEnabled: false
+      scaleDownDelaySeconds: 30
+      prePromotionAnalysis:
+        templates:
+        - templateName: success-rate
+        args:
+        - name: service-name
+          value: crm-production-preview
+      postPromotionAnalysis:
+        templates:
+        - templateName: success-rate
+        args:
+        - name: service-name
+          value: crm-production-active
+      previewReplicaCount: 2
+      activeSelector: "active"
+      previewSelector: "preview"
+
+  selector:
+    matchLabels:
+      app: crm
+      environment: production
+
+  template:
+    metadata:
+      labels:
+        app: crm
+        environment: production
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+
+      containers:
+      - name: crm-app
+        image: ${IMAGE_TAG}
+        imagePullPolicy: IfNotPresent
+
+        ports:
+        - containerPort: 8000
+          name: http
+          protocol: TCP
+
+        env:
+        - name: CRM_ENV
+          value: "production"
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: crm-secrets
+              key: secret-key
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: crm-config
+              key: db-host
+        - name: DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: crm-config
+              key: db-port
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: crm-secrets
+              key: db-name
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: crm-secrets
+              key: db-user
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: crm-secrets
+              key: db-password
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: crm-config
+              key: redis-host
+        - name: REDIS_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: crm-config
+              key: redis-port
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: crm-secrets
+              key: redis-password
+
+        resources:
+          requests:
+            cpu: 250m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 2Gi
+
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+
+        livenessProbe:
+          httpGet:
+            path: /health/
+            port: http
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+        readinessProbe:
+          httpGet:
+            path: /health/
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+
+        startupProbe:
+          httpGet:
+            path: /health/
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 30
+
+      imagePullSecrets:
+      - name: ghcr-secret
+
+      nodeSelector:
+        kubernetes.io/os: linux
+        node-type: application
+
+---
+# Active Service (Production Traffic)
+apiVersion: v1
+kind: Service
+metadata:
+  name: crm-production-active
+  namespace: production
+  labels:
+    app: crm
+    environment: production
+    role: active
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8000"
+    prometheus.io/path: "/metrics"
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  selector:
+    app: crm
+    environment: production
+    role: active
+
+---
+# Preview Service (New Version)
+apiVersion: v1
+kind: Service
+metadata:
+  name: crm-production-preview
+  namespace: production
+  labels:
+    app: crm
+    environment: production
+    role: preview
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8000"
+    prometheus.io/path: "/metrics"
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  selector:
+    app: crm
+    environment: production
+    role: preview
+
+---
+# Analysis Template for Blue-Green
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: success-rate
+  namespace: production
+spec:
+  args:
+  - name: service-name
+  metrics:
+  - name: success-rate
+    interval: 30s
+    count: 10
+    successCondition: result[0] >= 0.95
+    failureLimit: 3
+    provider:
+      prometheus:
+        address: http://prometheus-production:9090
+        query: |
+          sum(rate(http_requests_total{service="{{args.service-name}}",status!~"5.."}[2m]))
+          /
+          sum(rate(http_requests_total{service="{{args.service-name}}"}[2m]))
+
+  - name: latency
+    interval: 30s
+    count: 10
+    successCondition: result[0] <= 0.5
+    failureLimit: 3
+    provider:
+      prometheus:
+        address: http://prometheus-production:9090
+        query: |
+          histogram_quantile(0.95,
+            sum(rate(http_request_duration_seconds_bucket{service="{{args.service-name}}"}[2m]))
+            by (le)
+          )
+
+  - name: error-rate
+    interval: 30s
+    count: 10
+    successCondition: result[0] <= 0.05
+    failureLimit: 3
+    provider:
+      prometheus:
+        address: http://prometheus-production:9090
+        query: |
+          sum(rate(http_requests_total{service="{{args.service-name}}",status=~"5.."}[2m]))
+          /
+          sum(rate(http_requests_total{service="{{args.service-name}}"}[2m]))

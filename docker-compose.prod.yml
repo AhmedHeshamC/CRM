@@ -1,0 +1,199 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database (Production)
+  postgres:
+    image: postgres:16.4-alpine
+    container_name: crm_postgres_prod
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - crm_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis Cache & Message Broker (Production)
+  redis:
+    image: redis:7.2.5-alpine
+    container_name: crm_redis_prod
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+    networks:
+      - crm_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Django Application (Production)
+  django:
+    build:
+      context: .
+      dockerfile: Dockerfile.django
+      target: production
+    container_name: crm_django_prod
+    environment:
+      - DEBUG=False
+      - SECRET_KEY=${SECRET_KEY}
+      - DB_HOST=postgres
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_PORT=5432
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/1
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
+      - EMAIL_HOST=${EMAIL_HOST}
+      - EMAIL_PORT=${EMAIL_PORT}
+      - EMAIL_HOST_USER=${EMAIL_HOST_USER}
+      - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}
+    volumes:
+      - staticfiles:/var/www/static
+      - media:/var/www/media
+      - ./logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - crm_network
+    restart: unless-stopped
+
+  # FastAPI Application (Production)
+  fastapi:
+    build:
+      context: .
+      dockerfile: Dockerfile.fastapi
+      target: production
+    container_name: crm_fastapi_prod
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/2
+      - SECRET_KEY=${FASTAPI_SECRET_KEY}
+      - DEBUG=False
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - crm_network
+    restart: unless-stopped
+
+  # Celery Worker (Production)
+  celery_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.django
+      target: production
+    container_name: crm_celery_worker_prod
+    environment:
+      - DEBUG=False
+      - SECRET_KEY=${SECRET_KEY}
+      - DB_HOST=postgres
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_PORT=5432
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/1
+      - EMAIL_HOST=${EMAIL_HOST}
+      - EMAIL_PORT=${EMAIL_PORT}
+      - EMAIL_HOST_USER=${EMAIL_HOST_USER}
+      - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}
+    volumes:
+      - ./logs:/app/logs
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - crm_network
+    restart: unless-stopped
+    command: celery -A crm worker -l info --concurrency=4
+
+  # Celery Beat (Production)
+  celery_beat:
+    build:
+      context: .
+      dockerfile: Dockerfile.django
+      target: production
+    container_name: crm_celery_beat_prod
+    environment:
+      - DEBUG=False
+      - SECRET_KEY=${SECRET_KEY}
+      - DB_HOST=postgres
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_PORT=5432
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/1
+    volumes:
+      - ./logs:/app/logs
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - crm_network
+    restart: unless-stopped
+    command: celery -A crm beat -l info --schedule=/tmp/celerybeat-schedule
+
+  # Flower (Production Monitoring)
+  flower:
+    build:
+      context: .
+      dockerfile: Dockerfile.django
+      target: production
+    container_name: crm_flower_prod
+    environment:
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/1
+      - FLOWER_BASIC_AUTH=${FLOWER_USER}:${FLOWER_PASSWORD}
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+    networks:
+      - crm_network
+    restart: unless-stopped
+    command: celery -A crm flower --port=5555 --basic_auth=${FLOWER_USER}:${FLOWER_PASSWORD}
+
+  # Nginx Reverse Proxy (Production)
+  nginx:
+    image: nginx:1.27.0-alpine
+    container_name: crm_nginx_prod
+    volumes:
+      - ./docker/nginx/nginx.prod.conf:/etc/nginx/nginx.conf
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d
+      - staticfiles:/var/www/static
+      - media:/var/www/media
+      - ./docker/ssl:/etc/nginx/ssl
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - django
+      - fastapi
+    networks:
+      - crm_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  staticfiles:
+  media:
+
+networks:
+  crm_network:
+    driver: bridge

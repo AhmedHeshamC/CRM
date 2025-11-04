@@ -1,0 +1,365 @@
+---
+# Staging Deployment Configuration
+# Production-like environment for testing
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crm-staging
+  namespace: staging
+  labels:
+    app: crm
+    environment: staging
+    version: v1.0.0
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: crm
+      environment: staging
+  template:
+    metadata:
+      labels:
+        app: crm
+        environment: staging
+        version: v1.0.0
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+        prometheus.io/scheme: "http"
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+
+      containers:
+      - name: crm-app
+        image: ${IMAGE_TAG}
+        imagePullPolicy: Always
+
+        ports:
+        - containerPort: 8000
+          name: http
+          protocol: TCP
+
+        env:
+        - name: CRM_ENV
+          value: "staging"
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: crm-secrets
+              key: secret-key
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: crm-config
+              key: db-host
+        - name: DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: crm-config
+              key: db-port
+        - name: DB_NAME
+          value: "crm_staging"
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: crm-secrets
+              key: db-user
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: crm-secrets
+              key: db-password
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: crm-config
+              key: redis-host
+        - name: REDIS_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: crm-config
+              key: redis-port
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: crm-secrets
+              key: redis-password
+        - name: DEBUG
+          value: "true"
+        - name: ALLOWED_HOSTS
+          valueFrom:
+            configMapKeyRef:
+              name: crm-config
+              key: allowed-hosts-staging
+
+        resources:
+          requests:
+            cpu: 200m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 1Gi
+            ephemeral-storage: 1Gi
+
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+            - ALL
+
+        livenessProbe:
+          httpGet:
+            path: /health/
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 15
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+
+        readinessProbe:
+          httpGet:
+            path: /health/
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+          successThreshold: 1
+
+      - name: celery-worker
+        image: ${IMAGE_TAG}
+        imagePullPolicy: Always
+
+        command: ["celery", "-A", "crm.celery", "worker", "--loglevel=info", "--concurrency=2"]
+
+        env:
+        - name: CRM_ENV
+          value: "staging"
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: crm-secrets
+              key: secret-key
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: crm-config
+              key: db-host
+        - name: DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: crm-config
+              key: db-port
+        - name: DB_NAME
+          value: "crm_staging"
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: crm-secrets
+              key: db-user
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: crm-secrets
+              key: db-password
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: crm-config
+              key: redis-host
+        - name: REDIS_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: crm-config
+              key: redis-port
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: crm-secrets
+              key: redis-password
+        - name: CELERY_BROKER_URL
+          value: "redis://$(REDIS_HOST):$(REDIS_PORT)/1"
+        - name: CELERY_RESULT_BACKEND
+          value: "redis://$(REDIS_HOST):$(REDIS_PORT)/2"
+
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 300m
+            memory: 512Mi
+
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+            - ALL
+
+      - name: celery-beat
+        image: ${IMAGE_TAG}
+        imagePullPolicy: Always
+
+        command: ["celery", "-A", "crm.celery", "beat", "--loglevel=info"]
+
+        env:
+        - name: CRM_ENV
+          value: "staging"
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: crm-secrets
+              key: secret-key
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: crm-config
+              key: db-host
+        - name: DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: crm-config
+              key: db-port
+        - name: DB_NAME
+          value: "crm_staging"
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: crm-secrets
+              key: db-user
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: crm-secrets
+              key: db-password
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: crm-config
+              key: redis-host
+        - name: REDIS_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: crm-config
+              key: redis-port
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: crm-secrets
+              key: redis-password
+        - name: CELERY_BROKER_URL
+          value: "redis://$(REDIS_HOST):$(REDIS_PORT)/1"
+        - name: CELERY_RESULT_BACKEND
+          value: "redis://$(REDIS_HOST):$(REDIS_PORT)/2"
+
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
+
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+            - ALL
+
+      imagePullSecrets:
+      - name: ghcr-secret
+
+      nodeSelector:
+        kubernetes.io/os: linux
+
+---
+# Horizontal Pod Autoscaler for Staging
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: crm-staging-hpa
+  namespace: staging
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: crm-staging
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 85
+
+---
+# Service Configuration
+apiVersion: v1
+kind: Service
+metadata:
+  name: crm-staging-service
+  namespace: staging
+  labels:
+    app: crm
+    environment: staging
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8000"
+    prometheus.io/path: "/metrics"
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  selector:
+    app: crm
+    environment: staging
+
+---
+# Service Monitor for Prometheus
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: crm-staging-metrics
+  namespace: staging
+  labels:
+    app: crm
+    environment: staging
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: crm
+      environment: staging
+  endpoints:
+  - port: http
+    path: /metrics
+    interval: 60s
+    scrapeTimeout: 10s

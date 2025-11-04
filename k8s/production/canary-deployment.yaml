@@ -1,0 +1,467 @@
+---
+# Canary Deployment Strategy
+# Gradual rollout with traffic analysis and automated promotion
+
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: crm-production-canary
+  namespace: production
+  labels:
+    app: crm
+    environment: production
+    strategy: canary
+spec:
+  replicas: 4
+  strategy:
+    canary:
+      # Traffic routing
+      trafficRouting:
+        istio:
+          virtualService:
+            name: crm-vsvc
+            routes:
+            - primary
+          destinationRule:
+            name: crm-destrule
+            canarySubsetName: canary
+            stableSubsetName: stable
+
+      # Canary analysis
+      steps:
+      # Initial 5% traffic
+      - setWeight: 5
+      - pause: {duration: 2m}
+
+      # Analysis at 5%
+      - analysis:
+          templates:
+          - templateName: success-rate
+          args:
+          - name: service-name
+            value: crm-production-canary
+
+      # Increase to 20% traffic
+      - setWeight: 20
+      - pause: {duration: 5m}
+
+      # Analysis at 20%
+      - analysis:
+          templates:
+          - templateName: success-rate
+          - templateName: latency
+          args:
+          - name: service-name
+            value: crm-production-canary
+
+      # Increase to 50% traffic
+      - setWeight: 50
+      - pause: {duration: 10m}
+
+      # Analysis at 50%
+      - analysis:
+          templates:
+          - templateName: success-rate
+          - templateName: latency
+          - templateName: error-rate
+          args:
+          - name: service-name
+            value: crm-production-canary
+
+      # Final 100% traffic (full promotion)
+      - setWeight: 100
+
+      # Canary analysis configuration
+      analysis:
+        templates:
+        - templateName: success-rate
+        - templateName: latency
+        - templateName: error-rate
+        args:
+        - name: service-name
+          value: crm-production-canary
+        args:
+        - name: service-name
+          value: crm-production-stable
+
+  selector:
+    matchLabels:
+      app: crm
+      environment: production
+
+  template:
+    metadata:
+      labels:
+        app: crm
+        environment: production
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+
+      containers:
+      - name: crm-app
+        image: ${IMAGE_TAG}
+        imagePullPolicy: IfNotPresent
+
+        ports:
+        - containerPort: 8000
+          name: http
+          protocol: TCP
+
+        env:
+        - name: CRM_ENV
+          value: "production"
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: crm-secrets
+              key: secret-key
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: crm-config
+              key: db-host
+        - name: DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: crm-config
+              key: db-port
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: crm-secrets
+              key: db-name
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: crm-secrets
+              key: db-user
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: crm-secrets
+              key: db-password
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: crm-config
+              key: redis-host
+        - name: REDIS_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: crm-config
+              key: redis-port
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: crm-secrets
+              key: redis-password
+
+        resources:
+          requests:
+            cpu: 250m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 2Gi
+
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+
+        livenessProbe:
+          httpGet:
+            path: /health/
+            port: http
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+        readinessProbe:
+          httpGet:
+            path: /health/
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+
+        startupProbe:
+          httpGet:
+            path: /health/
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 30
+
+      imagePullSecrets:
+      - name: ghcr-secret
+
+      nodeSelector:
+        kubernetes.io/os: linux
+        node-type: application
+
+---
+# Stable Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: crm-production-stable
+  namespace: production
+  labels:
+    app: crm
+    environment: production
+    role: stable
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8000"
+    prometheus.io/path: "/metrics"
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  selector:
+    app: crm
+    environment: production
+    role: stable
+
+---
+# Canary Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: crm-production-canary
+  namespace: production
+  labels:
+    app: crm
+    environment: production
+    role: canary
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8000"
+    prometheus.io/path: "/metrics"
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  selector:
+    app: crm
+    environment: production
+    role: canary
+
+---
+# Canary Analysis Templates
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: success-rate
+  namespace: production
+spec:
+  args:
+  - name: service-name
+  metrics:
+  - name: success-rate
+    interval: 30s
+    count: 10
+    successCondition: result[0] >= 0.99
+    failureLimit: 3
+    provider:
+      prometheus:
+        address: http://prometheus-production:9090
+        query: |
+          sum(rate(http_requests_total{service="{{args.service-name}}",status!~"5.."}[2m]))
+          /
+          sum(rate(http_requests_total{service="{{args.service-name}}"}[2m]))
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: latency
+  namespace: production
+spec:
+  args:
+  - name: service-name
+  metrics:
+  - name: latency
+    interval: 30s
+    count: 10
+    successCondition: result[0] <= 0.5
+    failureLimit: 3
+    provider:
+      prometheus:
+        address: http://prometheus-production:9090
+        query: |
+          histogram_quantile(0.95,
+            sum(rate(http_request_duration_seconds_bucket{service="{{args.service-name}}"}[2m]))
+            by (le)
+          )
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: error-rate
+  namespace: production
+spec:
+  args:
+  - name: service-name
+  metrics:
+  - name: error-rate
+    interval: 30s
+    count: 10
+    successCondition: result[0] <= 0.01
+    failureLimit: 2
+    provider:
+      prometheus:
+        address: http://prometheus-production:9090
+        query: |
+          sum(rate(http_requests_total{service="{{args.service-name}}",status=~"5.."}[2m]))
+          /
+          sum(rate(http_requests_total{service="{{args.service-name}}"}[2m]))
+
+---
+# Istio Virtual Service for Traffic Splitting
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: crm-vsvc
+  namespace: production
+spec:
+  hosts:
+  - crm.example.com
+  gateways:
+  - crm-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /
+    name: primary
+    route:
+    - destination:
+        host: crm-production
+        subset: stable
+      weight: 100
+    - destination:
+        host: crm-production
+        subset: canary
+      weight: 0
+    mirror: null
+    mirrorPercentage: null
+
+---
+# Istio Destination Rule
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: crm-destrule
+  namespace: production
+spec:
+  host: crm-production
+  subsets:
+  - name: stable
+    labels:
+      role: stable
+    trafficPolicy:
+      loadBalancer:
+        simple: LEAST_CONN
+      connectionPool:
+        tcp:
+          maxConnections: 100
+        http:
+          http1MaxPendingRequests: 50
+          maxRequestsPerConnection: 10
+      circuitBreaker:
+        consecutiveErrors: 3
+        interval: 30s
+        baseEjectionTime: 30s
+  - name: canary
+    labels:
+      role: canary
+    trafficPolicy:
+      loadBalancer:
+        simple: LEAST_CONN
+      connectionPool:
+        tcp:
+          maxConnections: 50
+        http:
+          http1MaxPendingRequests: 25
+          maxRequestsPerConnection: 5
+      circuitBreaker:
+        consecutiveErrors: 2
+        interval: 15s
+        baseEjectionTime: 15s
+
+---
+# Istio Gateway
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: crm-gateway
+  namespace: production
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - crm.example.com
+    tls:
+      httpsRedirect: true
+  - port:
+      number: 443
+      name: https
+      protocol: HTTPS
+    tls:
+      mode: SIMPLE
+      credentialName: crm-tls-secret
+    hosts:
+    - crm.example.com
+
+---
+# Rollback Strategy
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: crm-rollback-strategy
+  namespace: production
+spec:
+  replicas: 4
+  strategy:
+    canary:
+      steps:
+      - setWeight: 100
+      trafficRouting:
+        istio:
+          virtualService:
+            name: crm-vsvc
+            routes:
+            - primary
+          destinationRule:
+            name: crm-destrule
+            canarySubsetName: rollback
+            stableSubsetName: stable

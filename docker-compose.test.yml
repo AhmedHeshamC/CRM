@@ -1,0 +1,119 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database - Testing
+  postgres:
+    image: postgres:16.4-alpine
+    container_name: crm_test_postgres
+    environment:
+      POSTGRES_DB: crm_test_db
+      POSTGRES_USER: crm_test_user
+      POSTGRES_PASSWORD: crm_test_password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    volumes:
+      - crm_test_postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5434:5432"  # Different port to avoid conflicts
+    networks:
+      - crm_test_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U crm_test_user -d crm_test_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  # Redis Cache & Message Broker - Testing
+  redis:
+    image: redis:7.2.5-alpine
+    container_name: crm_test_redis
+    command: redis-server --appendonly yes --requirepass crm_test_redis_password
+    volumes:
+      - crm_test_redis_data:/data
+    ports:
+      - "6380:6379"  # Different port to avoid conflicts
+    networks:
+      - crm_test_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  # Django Test Application
+  django-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.django
+      target: development
+    container_name: crm_django_test
+    environment:
+      - DEBUG=True
+      - DATABASE_URL=postgresql://crm_test_user:crm_test_password@postgres:5432/crm_test_db
+      - REDIS_URL=redis://:crm_test_redis_password@redis:6379/0
+      - SECRET_KEY=test-secret-key-for-testing-only
+      - ALLOWED_HOSTS=localhost,127.0.0.1
+      - CELERY_BROKER_URL=redis://:crm_test_redis_password@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:crm_test_redis_password@redis:6379/0
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+    ports:
+      - "8001:8000"  # Different port for testing
+    networks:
+      - crm_test_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: >
+      bash -c "
+        python manage.py wait-for-db &&
+        python manage.py migrate --noinput &&
+        python manage.py test --verbosity=2
+      "
+    restart: unless-stopped
+
+  # Celery Worker for Testing
+  celery-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.django
+      target: development
+    container_name: crm_celery_test_worker
+    environment:
+      - DEBUG=True
+      - DATABASE_URL=postgresql://crm_test_user:crm_test_password@postgres:5432/crm_test_db
+      - REDIS_URL=redis://:crm_test_redis_password@redis:6379/0
+      - SECRET_KEY=test-secret-key-for-testing-only
+      - ALLOWED_HOSTS=localhost,127.0.0.1
+      - CELERY_BROKER_URL=redis://:crm_test_redis_password@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:crm_test_redis_password@redis:6379/0
+    volumes:
+      - ./src:/app/src
+    networks:
+      - crm_test_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A crm worker --loglevel=info --concurrency=2
+    restart: unless-stopped
+
+volumes:
+  crm_test_postgres_data:
+    driver: local
+  crm_test_redis_data:
+    driver: local
+
+networks:
+  crm_test_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
